@@ -8,7 +8,7 @@ import (
 	"go.uber.org/multierr"
 )
 
-type WorkerFunc func(cmd *Worker) error
+type WorkerFunc func(worker *Worker) error
 
 type Worker struct {
 	ctx    context.Context
