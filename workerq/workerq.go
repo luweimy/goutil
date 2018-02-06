@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"go.uber.org/multierr"
+
+	"github.com/luweimy/goutil/syncq"
 )
 
 type WorkerFunc func(worker *Worker) error
@@ -58,19 +60,21 @@ func (c *Worker) Do() {
 }
 
 type WorkerQueue struct {
-	// working workers
-	workers chan *Worker
+	workers chan *Worker // working workers
 	mu      sync.RWMutex
+
+	backlog *syncq.SyncQueue // backlog queue
 }
 
 func NewWorkerQueue(concurrency int) *WorkerQueue {
 	if concurrency <= 0 {
 		concurrency = 1
 	}
-
 	q := &WorkerQueue{
 		workers: make(chan *Worker, concurrency),
+		backlog: syncq.NewSyncQueue(),
 	}
+	go q.dispatchWorkers()
 	return q
 }
 
@@ -88,7 +92,7 @@ func (q *WorkerQueue) SetConcurrency(concurrency int) {
 }
 
 func (q *WorkerQueue) AppendWorker(worker *Worker) <-chan struct{} {
-	go q.dispatchWorker(worker)
+	q.backlog.Enqueue(worker)
 	return worker.Done()
 }
 
@@ -98,13 +102,16 @@ func (q *WorkerQueue) AppendWorkerFunc(ctx context.Context, wf WorkerFunc) *Work
 	return worker
 }
 
-func (q *WorkerQueue) dispatchWorker(worker *Worker) {
-	// working workers, acquire rlock
-	withLock(q.mu.RLocker(), func() {
-		q.workers <- worker
-		defer func() { <-q.workers }()
-		worker.Do()
-	})
+func (q *WorkerQueue) dispatchWorkers() {
+	for {
+		worker := q.backlog.Dequeue().(*Worker)
+		// working worker, acquire rlock
+		go withLock(q.mu.RLocker(), func() {
+			q.workers <- worker
+			defer func() { <-q.workers }()
+			worker.Do()
+		})
+	}
 }
 
 func withLock(lk sync.Locker, fn func()) {
