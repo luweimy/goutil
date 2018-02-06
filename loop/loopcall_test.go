@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewCallLoop(t *testing.T) {
-	loopCall := NewCallLoop(time.Second, func(loop *CallLoop, now time.Time) bool {
+	loopCall := NewLoopCall(time.Second, func(loop *LoopCall, now time.Time) bool {
 		fmt.Println("NOW=>", now.Format(time.RFC3339))
 		loop.Stop()
 		return true

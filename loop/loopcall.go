@@ -5,17 +5,17 @@ import (
 	"time"
 )
 
-type CallFunc func(loop *CallLoop, now time.Time) bool
+type CallFunc func(loop *LoopCall, now time.Time) bool
 
-type CallLoop struct {
+type LoopCall struct {
 	once    sync.Once
 	ticker  *time.Ticker
 	handler CallFunc
 	cancel  chan struct{}
 }
 
-func NewCallLoop(d time.Duration, handler CallFunc) *CallLoop {
-	l := &CallLoop{
+func NewLoopCall(d time.Duration, handler CallFunc) *LoopCall {
+	l := &LoopCall{
 		ticker:  time.NewTicker(d),
 		handler: handler,
 		cancel:  make(chan struct{}, 1),
@@ -24,7 +24,7 @@ func NewCallLoop(d time.Duration, handler CallFunc) *CallLoop {
 	return l
 }
 
-func (l *CallLoop) loopCall() {
+func (l *LoopCall) loopCall() {
 	for {
 		select {
 		case d := <-l.ticker.C:
@@ -36,15 +36,15 @@ func (l *CallLoop) loopCall() {
 	}
 }
 
-func (l *CallLoop) Wait() {
+func (l *LoopCall) Wait() {
 	<-l.cancel
 }
 
-func (l *CallLoop) Done() <-chan struct{} {
+func (l *LoopCall) Done() <-chan struct{} {
 	return l.cancel
 }
 
-func (l *CallLoop) Stop() {
+func (l *LoopCall) Stop() {
 	l.once.Do(func() {
 		l.ticker.Stop()
 		l.cancel <- struct{}{}
