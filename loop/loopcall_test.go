@@ -25,3 +25,19 @@ func TestNewCallLoop(t *testing.T) {
 	// already stop
 	loopCall.Wait()
 }
+
+func BenchmarkCallLoop(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		call := NewLoopCall(time.Second, func(loop *LoopCall, now time.Time) bool {
+			return false
+		})
+		call.Stop()
+	}
+}
+
+func BenchmarkTicker(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		ticker := time.NewTicker(time.Second)
+		ticker.Stop()
+	}
+}
