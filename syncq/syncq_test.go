@@ -1,6 +1,7 @@
 package syncq
 
 import (
+	"container/list"
 	"errors"
 	"runtime"
 	"testing"
@@ -79,5 +80,14 @@ func BenchmarkSyncQueue(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		q.Enqueue(i)
 		q.Dequeue()
+	}
+}
+
+func BenchmarkList(b *testing.B) {
+	q := list.New()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		q.PushBack(i)
+		q.Remove(q.Front())
 	}
 }

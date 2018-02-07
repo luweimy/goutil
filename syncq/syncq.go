@@ -5,9 +5,9 @@ import (
 	"context"
 )
 
-// 效果类似于channel，但是可以设置为无数量限制(max<=0)
-// Enqueue 接口会阻塞直到可以元素放入队列中
-// Dequeue 接口会阻塞直到队列中有元素返回
+// 效果类似于channel，但是可以设置为无限buffer的channel(max<=0)
+// Enqueue 接口会阻塞直到可以元素放入队列中，阻塞的情况只在队列满的时候才会出现
+// Dequeue 接口会阻塞直到队列中有元素返回，阻塞的情况只在队列空的时候才会出现
 type SyncQueue struct {
 	ctx    context.Context
 	cancel context.CancelFunc
