@@ -1,7 +1,6 @@
 package syncq
 
 import (
-	"container/list"
 	"errors"
 	"runtime"
 	"testing"
@@ -83,11 +82,39 @@ func BenchmarkSyncQueue(b *testing.B) {
 	}
 }
 
-func BenchmarkList(b *testing.B) {
-	q := list.New()
+func BenchmarkChannelBuffer1(b *testing.B) {
+	ch := make(chan struct{}, 1)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		q.PushBack(i)
-		q.Remove(q.Front())
+		ch <- struct{}{}
+		<-ch
+	}
+}
+
+func BenchmarkChannelNoBufferNoSelect(b *testing.B) {
+	ch := make(chan struct{}, 0)
+	b.ResetTimer()
+	go func() {
+		for {
+			<-ch
+		}
+	}()
+	for i := 0; i < b.N; i++ {
+		ch <- struct{}{}
+	}
+}
+
+func BenchmarkChannelNoBufferWithSelect(b *testing.B) {
+	ch := make(chan struct{}, 0)
+	b.ResetTimer()
+	go func() {
+		for {
+			select {
+			case <-ch:
+			}
+		}
+	}()
+	for i := 0; i < b.N; i++ {
+		ch <- struct{}{}
 	}
 }
