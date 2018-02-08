@@ -105,6 +105,7 @@ func (q *WorkerQueue) AppendWorkerFunc(ctx context.Context, wf WorkerFunc) *Work
 func (q *WorkerQueue) dispatchWorkers() {
 	for {
 		worker := q.backlog.Dequeue().(*Worker)
+		// TODO: goroutine running num limit
 		// working worker, acquire rlock
 		go withLock(q.mu.RLocker(), func() {
 			q.workers <- worker
