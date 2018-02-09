@@ -76,7 +76,8 @@ type WorkerQueue struct {
 	mu      sync.RWMutex
 }
 
-func NewWorkerQueue(concurrency int) *WorkerQueue {
+// New create WorkerQueue object, max concurrency workers is allowed
+func New(concurrency int) *WorkerQueue {
 	if concurrency <= 0 {
 		concurrency = 1
 	}

@@ -21,7 +21,7 @@ func TestNewWorker(t *testing.T) {
 }
 
 func TestNewWorkerQueue(t *testing.T) {
-	wq := NewWorkerQueue(1).Start()
+	wq := New(1).Start()
 
 	doneWorkers := make([]*Worker, 0, 2)
 	mu := sync.Mutex{}
@@ -67,7 +67,7 @@ func TestNewWorkerQueue(t *testing.T) {
 }
 
 func TestNewWorkerQueueSetConcurrency(t *testing.T) {
-	wq := NewWorkerQueue(1).Start()
+	wq := New(1).Start()
 
 	// 并发1时，启动一个worker
 	worker0 := wq.AddWorkerFunc(nil, func(worker *Worker) error {
@@ -121,7 +121,7 @@ func TestNewWorkerQueueSetConcurrency(t *testing.T) {
 }
 
 func TestNewWorkerQueue_StartStop(t *testing.T) {
-	wq := NewWorkerQueue(1)
+	wq := New(1)
 
 	// 并发1时，启动一个worker
 	worker0 := wq.AddWorkerFunc(nil, func(worker *Worker) error {
