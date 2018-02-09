@@ -81,8 +81,7 @@ func New(concurrency int) *WorkerQueue {
 	if concurrency <= 0 {
 		concurrency = 1
 	}
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
+	ctx, cancel := context.WithCancel(context.Background())
 	q := &WorkerQueue{
 		cancel:  cancel,
 		ctx:     ctx,
