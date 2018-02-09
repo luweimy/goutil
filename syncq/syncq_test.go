@@ -8,7 +8,7 @@ import (
 )
 
 func TestSyncQueue(t *testing.T) {
-	q := NewSyncQueue()
+	q := New()
 	for i := 0; i < 1000; i++ {
 		q.Enqueue(i)
 	}
@@ -34,7 +34,7 @@ func TestSyncQueue(t *testing.T) {
 
 func TestSyncQueue_Destroy(t *testing.T) {
 	numgo := runtime.NumGoroutine()
-	q := NewSyncQueue()
+	q := New()
 
 	numgo2 := runtime.NumGoroutine()
 	if numgo+1 != numgo2 {
@@ -55,7 +55,7 @@ func TestSyncQueue_Destroy(t *testing.T) {
 }
 
 func TestNewSyncQueue(t *testing.T) {
-	q := NewSyncQueueWithSize(2)
+	q := NewWithSize(2)
 	q.Enqueue(1)
 	q.Enqueue(2)
 
@@ -74,7 +74,7 @@ func TestNewSyncQueue(t *testing.T) {
 }
 
 func BenchmarkSyncQueue(b *testing.B) {
-	q := NewSyncQueue()
+	q := New()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		q.Enqueue(i)

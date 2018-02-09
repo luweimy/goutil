@@ -71,7 +71,7 @@ type WorkerQueue struct {
 	cancel context.CancelFunc
 	ctx    context.Context
 
-	backlog *syncq.SyncQueue // backlog workers queue
+	backlog *syncq.SyncQueue // backlog workers queue(unlimited size)
 	workers chan *Worker     // processing workers
 	mu      sync.RWMutex
 }
@@ -86,7 +86,7 @@ func NewWorkerQueue(concurrency int) *WorkerQueue {
 		cancel:  cancel,
 		ctx:     ctx,
 		workers: make(chan *Worker, concurrency),
-		backlog: syncq.NewSyncQueue(),
+		backlog: syncq.New(),
 	}
 	return q
 }

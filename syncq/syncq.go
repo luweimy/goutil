@@ -22,7 +22,7 @@ type SyncQueue struct {
 // max代表队列元素个数上限，若小于等于0，则队列无元素上限
 // 内部会启动一个goroutine用于channel同步，可用Destroy()方法销毁。
 // 注意调用Destroy()后就不可执行入队出队操作，否则会一直阻塞下去。
-func NewSyncQueueWithSize(max int) *SyncQueue {
+func NewWithSize(max int) *SyncQueue {
 	ctx, cancel := context.WithCancel(context.Background())
 	q := &SyncQueue{
 		ctx:    ctx,
@@ -36,8 +36,8 @@ func NewSyncQueueWithSize(max int) *SyncQueue {
 	return q
 }
 
-func NewSyncQueue() *SyncQueue {
-	return NewSyncQueueWithSize(0)
+func New() *SyncQueue {
+	return NewWithSize(0)
 }
 
 func (q *SyncQueue) dispatch() {
