@@ -21,13 +21,13 @@ func TestNewWorker(t *testing.T) {
 }
 
 func TestNewWorkerQueue(t *testing.T) {
-	wq := NewWorkerQueue(1)
+	wq := NewWorkerQueue(1).Start()
 
 	doneWorkers := make([]*Worker, 0, 2)
 	mu := sync.Mutex{}
 
 	// 启动第一个worker
-	worker1 := wq.AppendWorkerFunc(nil, func(worker *Worker) error {
+	worker1 := wq.AddWorkerFunc(nil, func(worker *Worker) error {
 		t.Logf("worker1 start %p", worker)
 		time.Sleep(time.Second)
 		withLock(&mu, func() {
@@ -38,7 +38,7 @@ func TestNewWorkerQueue(t *testing.T) {
 	})
 
 	// 启动第二个worker
-	worker2 := wq.AppendWorkerFunc(nil, func(worker *Worker) error {
+	worker2 := wq.AddWorkerFunc(nil, func(worker *Worker) error {
 		t.Logf("worker2 start %p", worker)
 		withLock(&mu, func() {
 			doneWorkers = append(doneWorkers, worker)
@@ -67,10 +67,10 @@ func TestNewWorkerQueue(t *testing.T) {
 }
 
 func TestNewWorkerQueueSetConcurrency(t *testing.T) {
-	wq := NewWorkerQueue(1)
+	wq := NewWorkerQueue(1).Start()
 
 	// 并发1时，启动一个worker
-	wq.AppendWorkerFunc(nil, func(worker *Worker) error {
+	worker0 := wq.AddWorkerFunc(nil, func(worker *Worker) error {
 		t.Log("worker0 start", time.Now().Format(TimeFormatLayout))
 		time.Sleep(time.Millisecond * 500)
 		t.Log("worker0 done", time.Now().Format(TimeFormatLayout))
@@ -78,13 +78,15 @@ func TestNewWorkerQueueSetConcurrency(t *testing.T) {
 	})
 
 	// 改为并发2
+	<-worker0.Begin() // 等待WorkerQueue的dispatch协程启动，并处理worker0
+	t.Log("before-setconcurrency: cap(q.workers)", cap(wq.workers))
 	wq.SetConcurrency(2)
-	t.Log("cap(q.workers)", cap(wq.workers))
+	t.Log("after-setconcurrency: cap(q.workers)", cap(wq.workers))
 
 	startWorkers := make([]time.Time, 0, 3)
 	mu := sync.Mutex{}
 
-	worker1 := wq.AppendWorkerFunc(nil, func(worker *Worker) error {
+	worker1 := wq.AddWorkerFunc(nil, func(worker *Worker) error {
 		t.Log("worker1 start", time.Now().Format(TimeFormatLayout))
 		withLock(&mu, func() {
 			startWorkers = append(startWorkers, time.Now())
@@ -94,7 +96,7 @@ func TestNewWorkerQueueSetConcurrency(t *testing.T) {
 		return nil
 	})
 
-	worker2 := wq.AppendWorkerFunc(nil, func(worker *Worker) error {
+	worker2 := wq.AddWorkerFunc(nil, func(worker *Worker) error {
 		t.Log("worker2 start", time.Now().Format(TimeFormatLayout))
 		withLock(&mu, func() {
 			startWorkers = append(startWorkers, time.Now())
@@ -116,4 +118,24 @@ func TestNewWorkerQueueSetConcurrency(t *testing.T) {
 			t.Errorf("startWorkers time not except, %v", startWorkers)
 		}
 	})
+}
+
+func TestNewWorkerQueue_StartStop(t *testing.T) {
+	wq := NewWorkerQueue(1)
+
+	// 并发1时，启动一个worker
+	worker0 := wq.AddWorkerFunc(nil, func(worker *Worker) error {
+		time.Sleep(time.Millisecond * 500)
+		return nil
+	})
+
+	wq.Start()
+
+	<-worker0.Begin()
+	wq.Stop()
+	<-worker0.Done()
+
+	wq.Start()
+	worker0.Wait()
+	wq.Stop()
 }
