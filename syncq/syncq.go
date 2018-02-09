@@ -81,6 +81,14 @@ func (q *SyncQueue) Dequeue() interface{} {
 	return <-q.out
 }
 
+func (q *SyncQueue) EnqueueC() chan<- interface{} {
+	return q.in
+}
+
+func (q *SyncQueue) DequeueC() <-chan interface{} {
+	return q.out
+}
+
 func (q *SyncQueue) Destroy() {
 	// cancel dispatch goroutine
 	q.cancel()
