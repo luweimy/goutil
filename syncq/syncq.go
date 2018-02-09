@@ -5,7 +5,7 @@ import (
 	"context"
 )
 
-// SyncQueue 类似于可无限buffer的channel
+// SyncQueue类似于buffer可无限制的channel
 // 设置无限buffer的channel(max<=0)
 // Enqueue 接口会阻塞直到可以元素放入队列中，阻塞的情况只在队列满的时候才会出现
 // Dequeue 接口会阻塞直到队列中有元素返回，阻塞的情况只在队列空的时候才会出现
