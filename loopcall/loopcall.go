@@ -1,4 +1,4 @@
-package loop
+package loopcall
 
 import (
 	"sync"
@@ -14,7 +14,7 @@ type LoopCall struct {
 	cancel  chan struct{}
 }
 
-func NewLoopCall(d time.Duration, handler CallFunc) *LoopCall {
+func New(d time.Duration, handler CallFunc) *LoopCall {
 	l := &LoopCall{
 		ticker:  time.NewTicker(d),
 		handler: handler,
