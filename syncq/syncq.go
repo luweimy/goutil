@@ -5,7 +5,8 @@ import (
 	"context"
 )
 
-// 效果类似于channel，但是可以设置为无限buffer的channel(max<=0)
+// SyncQueue 类似于可无限buffer的channel
+// 设置无限buffer的channel(max<=0)
 // Enqueue 接口会阻塞直到可以元素放入队列中，阻塞的情况只在队列满的时候才会出现
 // Dequeue 接口会阻塞直到队列中有元素返回，阻塞的情况只在队列空的时候才会出现
 type SyncQueue struct {
@@ -42,7 +43,7 @@ func NewSyncQueue() *SyncQueue {
 func (q *SyncQueue) dispatch() {
 	for {
 		if q.l.Len() == 0 {
-			// 只允许入队列
+			// the queue is empty, only enqueue is allowed.
 			select {
 			case v := <-q.in:
 				q.l.PushBack(v)
@@ -52,7 +53,7 @@ func (q *SyncQueue) dispatch() {
 		}
 		e := q.l.Front()
 		if q.max > 0 && q.l.Len() >= q.max {
-			// 到达队列最大元素个数限制，只允许出队列
+			// the queue is full, only dequeue is allowed.
 			select {
 			case q.out <- e.Value:
 				q.l.Remove(e)
@@ -60,7 +61,7 @@ func (q *SyncQueue) dispatch() {
 				return
 			}
 		} else {
-			// 允许入队列和出队列
+			// enqueue and dequeue are allowed.
 			select {
 			case value := <-q.in:
 				q.l.PushBack(value)
