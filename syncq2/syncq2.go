@@ -13,7 +13,6 @@ import (
 type SyncQueue struct {
 	cond *sync.Cond
 	l    *list.List
-	out  chan interface{} // use to dequeue
 }
 
 func New() *SyncQueue {
