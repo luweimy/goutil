@@ -1,4 +1,4 @@
-package loopcall
+package call
 
 import (
 	"fmt"

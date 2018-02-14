@@ -1,8 +1,8 @@
-package do
+package call
 
 import "sync"
 
-func Do(fn func()) <-chan struct{} {
+func Async(fn func()) <-chan struct{} {
 	done := make(chan struct{}, 1)
 	go func() {
 		defer func() {

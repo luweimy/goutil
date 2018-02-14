@@ -1,4 +1,4 @@
-package do
+package call
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 
 func TestDo(t *testing.T) {
 	t1 := time.Now()
-	<-Do(func() {
+	<-Async(func() {
 		time.Sleep(time.Second)
 		t.Log("await done")
 	})

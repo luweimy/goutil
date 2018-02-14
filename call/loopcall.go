@@ -1,22 +1,22 @@
-package loopcall
+package call
 
 import (
 	"sync"
 	"time"
 )
 
-type CallFunc func(loop *LoopCall, now time.Time) bool
+type CallFunc func(loop *loopCall, now time.Time) bool
 
-type LoopCall struct {
+type loopCall struct {
 	once    sync.Once
 	ticker  *time.Ticker
 	handler CallFunc
 	cancel  chan struct{}
 }
 
-func New(d time.Duration, handler CallFunc) *LoopCall {
-	l := &LoopCall{
-		ticker:  time.NewTicker(d),
+func Loop(interval time.Duration, handler CallFunc) *loopCall {
+	l := &loopCall{
+		ticker:  time.NewTicker(interval),
 		handler: handler,
 		cancel:  make(chan struct{}, 1),
 	}
@@ -24,7 +24,7 @@ func New(d time.Duration, handler CallFunc) *LoopCall {
 	return l
 }
 
-func (l *LoopCall) loopCall() {
+func (l *loopCall) loopCall() {
 	for {
 		select {
 		case d := <-l.ticker.C:
@@ -36,15 +36,15 @@ func (l *LoopCall) loopCall() {
 	}
 }
 
-func (l *LoopCall) Wait() {
+func (l *loopCall) Wait() {
 	<-l.cancel
 }
 
-func (l *LoopCall) Done() <-chan struct{} {
+func (l *loopCall) Done() <-chan struct{} {
 	return l.cancel
 }
 
-func (l *LoopCall) Stop() {
+func (l *loopCall) Stop() {
 	l.once.Do(func() {
 		l.ticker.Stop()
 		l.cancel <- struct{}{}
