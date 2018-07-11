@@ -3,6 +3,7 @@ package syncq
 import (
 	"errors"
 	"runtime"
+	"sync"
 	"testing"
 	"time"
 )
@@ -80,6 +81,28 @@ func BenchmarkSyncQueue(b *testing.B) {
 		q.Enqueue(i)
 		q.Dequeue()
 	}
+}
+
+func BenchmarkSyncQueue2(b *testing.B) {
+	q := New()
+	b.ResetTimer()
+
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+	go func() {
+		for i := 0; i < b.N; i++ {
+			q.Dequeue()
+		}
+		wg.Done()
+	}()
+	go func() {
+		for i := 0; i < b.N; i++ {
+			q.Enqueue(i)
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
 }
 
 func BenchmarkChannelBuffer1(b *testing.B) {

@@ -3,8 +3,6 @@ package syncq2
 import (
 	"container/list"
 	"sync"
-
-	"github.com/luweimy/goutil/call"
 )
 
 // SyncQueue相当于无容量限制的channel
@@ -24,7 +22,7 @@ func New() *SyncQueue {
 }
 
 func (q *SyncQueue) Enqueue(value interface{}) {
-	call.WithLock(q.cond.L, func() {
+	withLock(q.cond.L, func() {
 		q.l.PushBack(value)
 		q.cond.Signal()
 	})
@@ -32,7 +30,7 @@ func (q *SyncQueue) Enqueue(value interface{}) {
 
 func (q *SyncQueue) Dequeue() interface{} {
 	var v interface{}
-	call.WithLock(q.cond.L, func() {
+	withLock(q.cond.L, func() {
 		// if queue is empty, wait enqueue
 		for q.l.Len() <= 0 {
 			q.cond.Wait()
@@ -56,4 +54,10 @@ func (q *SyncQueue) DequeueC() <-chan interface{} {
 		out <- q.Dequeue()
 	}()
 	return out
+}
+
+func withLock(lk sync.Locker, fn func()) {
+	lk.Lock()
+	defer lk.Unlock() // in case fn panics
+	fn()
 }
