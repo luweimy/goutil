@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/multierr"
 
-	"github.com/luweimy/goutil/syncq"
+	"github.com/luweimy/goutil/syncq2"
 )
 
 type WorkerFunc func(worker *Worker) error
@@ -71,8 +71,8 @@ type WorkerQueue struct {
 	cancel context.CancelFunc
 	ctx    context.Context
 
-	backlog *syncq.SyncQueue // backlog workers queue(unlimited size)
-	workers chan *Worker     // processing workers
+	backlog *syncq2.SyncQueue // backlog workers queue(unlimited size)
+	workers chan *Worker      // processing workers
 	mu      sync.RWMutex
 }
 
@@ -86,7 +86,7 @@ func New(concurrency int) *WorkerQueue {
 		cancel:  cancel,
 		ctx:     ctx,
 		workers: make(chan *Worker, concurrency),
-		backlog: syncq.New(),
+		backlog: syncq2.New(),
 	}
 	return q
 }
@@ -153,7 +153,7 @@ func (q *WorkerQueue) dispatchWorkers() {
 func (q *WorkerQueue) dispatchWorker(worker *Worker) {
 	// acquire rlock during work processing to block resize workers channel buffer.
 	q.mu.RLock()
-	// worker must be processing, even through ctx canceled.
+	// worker must be processed, even through ctx canceled.
 	q.workers <- worker
 	// avoid work processing block dispatch goroutine.
 	go func() {

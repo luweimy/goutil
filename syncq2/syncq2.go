@@ -11,6 +11,11 @@ import (
 type SyncQueue struct {
 	cond *sync.Cond
 	l    *list.List
+
+	in      chan interface{}
+	out     chan interface{}
+	inOnce  sync.Once
+	outOnce sync.Once
 }
 
 func New() *SyncQueue {
@@ -41,19 +46,27 @@ func (q *SyncQueue) Dequeue() interface{} {
 }
 
 func (q *SyncQueue) EnqueueC() chan<- interface{} {
-	var in = make(chan interface{})
-	go func() {
-		q.Enqueue(<-in)
-	}()
-	return in
+	if q.in == nil {
+		q.inOnce.Do(func() {
+			q.in = make(chan interface{})
+			go func() {
+				q.Enqueue(<-q.in)
+			}()
+		})
+	}
+	return q.in
 }
 
 func (q *SyncQueue) DequeueC() <-chan interface{} {
-	var out = make(chan interface{})
-	go func() {
-		out <- q.Dequeue()
-	}()
-	return out
+	if q.out == nil {
+		q.outOnce.Do(func() {
+			q.out = make(chan interface{})
+			go func() {
+				q.out <- q.Dequeue()
+			}()
+		})
+	}
+	return q.out
 }
 
 func withLock(lk sync.Locker, fn func()) {
