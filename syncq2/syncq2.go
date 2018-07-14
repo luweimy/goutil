@@ -2,6 +2,7 @@ package syncq2
 
 import (
 	"container/list"
+	"context"
 	"sync"
 )
 
@@ -9,8 +10,10 @@ import (
 // Enqueue 接口将元素放入队列中，不会发生阻塞
 // Dequeue 接口会阻塞直到队列中有元素返回，阻塞的情况只在队列空的时候才会出现
 type SyncQueue struct {
-	cond *sync.Cond
-	l    *list.List
+	ctx    context.Context
+	cancel context.CancelFunc
+	cond   *sync.Cond
+	l      *list.List
 
 	in      chan interface{}
 	out     chan interface{}
@@ -19,9 +22,12 @@ type SyncQueue struct {
 }
 
 func New() *SyncQueue {
+	ctx, cancel := context.WithCancel(context.Background())
 	q := &SyncQueue{
-		l:    list.New(),
-		cond: sync.NewCond(&sync.Mutex{}),
+		ctx:    ctx,
+		cancel: cancel,
+		l:      list.New(),
+		cond:   sync.NewCond(&sync.Mutex{}),
 	}
 	return q
 }
@@ -50,7 +56,14 @@ func (q *SyncQueue) EnqueueC() chan<- interface{} {
 		q.inOnce.Do(func() {
 			q.in = make(chan interface{})
 			go func() {
-				q.Enqueue(<-q.in)
+				for {
+					select {
+					case v := <-q.in:
+						q.Enqueue(v)
+					case <-q.ctx.Done():
+						return
+					}
+				}
 			}()
 		})
 	}
@@ -62,11 +75,23 @@ func (q *SyncQueue) DequeueC() <-chan interface{} {
 		q.outOnce.Do(func() {
 			q.out = make(chan interface{})
 			go func() {
-				q.out <- q.Dequeue()
+				for {
+					q.out <- q.Dequeue()
+					select {
+					case <-q.ctx.Done():
+						return
+					default:
+					}
+				}
 			}()
 		})
 	}
 	return q.out
+}
+
+func (q *SyncQueue) Destroy() {
+	// cancel enqueue/dequeue goroutine
+	q.cancel()
 }
 
 func withLock(lk sync.Locker, fn func()) {

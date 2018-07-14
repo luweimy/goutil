@@ -101,6 +101,7 @@ func (q *WorkerQueue) Start() *WorkerQueue {
 // stop can not stop processing workers and the workers not in backlog will be processed.
 func (q *WorkerQueue) Stop() {
 	q.cancel()
+	q.backlog.Destroy()
 }
 
 // SetConcurrency set concurrency will be blocked until processing workers all done.
@@ -118,8 +119,8 @@ func (q *WorkerQueue) SetConcurrency(concurrency int) {
 	})
 }
 
-// NumProcessingWorkers return num of processing workers, top limit is concurrency.
-func (q *WorkerQueue) NumProcessingWorkers() int {
+// NumWorkingWorkers return num of working workers, top limit is concurrency.
+func (q *WorkerQueue) NumWorkingWorkers() int {
 	var n = 0
 	withLock(q.mu.RLocker(), func() {
 		n = len(q.workers)

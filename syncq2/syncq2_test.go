@@ -59,6 +59,16 @@ func TestNewSyncQueue(t *testing.T) {
 	}
 }
 
+func TestNewSyncQueue2(t *testing.T) {
+	q := New()
+	go func() {
+		q.Enqueue(1)
+	}()
+	v := q.Dequeue()
+	q.Destroy()
+	t.Log("dequeue=>", v)
+}
+
 func TestSyncQueueDequeueC(t *testing.T) {
 	q := New()
 	in := q.EnqueueC()

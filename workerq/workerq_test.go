@@ -52,6 +52,8 @@ func TestNewWorkerQueue(t *testing.T) {
 	worker1.Wait()
 	worker2.Wait()
 
+	wq.Stop()
+
 	// 验证worker处理顺序
 	withLock(&mu, func() {
 		if len(doneWorkers) != 2 {
